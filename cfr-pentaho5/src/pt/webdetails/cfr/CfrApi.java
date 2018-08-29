@@ -209,10 +209,19 @@ public class CfrApi {
   @Produces( MimeTypes.JSON )
   public String store( @FormDataParam( "file" ) InputStream uploadedInputStream,
                        @FormDataParam( "file" ) FormDataContentDisposition fileDetail,
-                       @FormDataParam( "path" ) String path ) throws JSONException {
+                       @FormDataParam( "path" ) String path,
+                       @FormDataParam( "shortFileName" ) String shortFileName ) throws JSONException {
 
-    String fileName = checkRelativePathSanity( fileDetail.getFileName() ),
-        savePath = checkRelativePathSanity( path );
+    /* This is a workaround to an issue where IE sends a corrupted filename. The client must explicitly send a
+     * shortFileName as well.  If the client does not send this shortFileName then the behaviour is as before */
+    String fileName;
+    if ( shortFileName == null ) {
+      fileName = checkRelativePathSanity( fileDetail.getFileName() );
+    } else {
+      fileName = checkRelativePathSanity( shortFileName );
+    }
+
+    String savePath = checkRelativePathSanity( path );
 
     if ( fileName == null ) {
       logger.error( "parameter fileName must not be null" );
@@ -258,10 +267,11 @@ public class CfrApi {
   @Produces( MimeTypes.HTML )
   public String storeIE( @FormDataParam( "file" ) InputStream uploadedInputStream,
                          @FormDataParam( "file" ) FormDataContentDisposition fileDetail,
-                         @FormDataParam( "path" ) String path ) throws JSONException {
+                         @FormDataParam( "path" ) String path,
+                         @FormDataParam( "shortFileName" ) String shortFileName ) throws JSONException {
     // IE versions < 10 can't handle JSON as a response to a form submit
     // the plugin used to upload files allows for a textarea tag encapsulating the JSON response to be returned instead
-    return "<textarea>" + store( uploadedInputStream, fileDetail, path ) + "</textarea>";
+    return "<textarea>" + store( uploadedInputStream, fileDetail, path, shortFileName ) + "</textarea>";
   }
 
 
